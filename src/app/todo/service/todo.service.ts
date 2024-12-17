@@ -1,6 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, computed, inject,signal } from '@angular/core';
 import { Todo } from '../model/todo';
 import { LoggerService } from '../../services/logger.service';
+import { TodoStatus } from "../model/status";
+
+
+type todoDict = {
+  [key:string]:Todo[]
+}
+
 
 let n = 1;
 
@@ -8,8 +15,25 @@ let n = 1;
   providedIn: 'root',
 })
 export class TodoService {
-  private todos: Todo[] = [];
-  constructor(private loggerService: LoggerService) {}
+  private loggerService = inject(LoggerService);
+
+  public todos = signal<Todo[]>([])
+
+  public display = computed(()=>{
+    let dis:todoDict={'waiting':[],'in progress':[],'done':[]}
+   this.todos().map((todo)=>{
+    if (todo.status==='waiting'){
+      dis['waiting'].push(todo)
+    }else if(todo.status==='in progress'){
+      dis['in progress'].push(todo)
+    }else{
+      dis['done'].push(todo)
+    }
+
+   })
+   
+   return dis
+  })
 
   /**
    * elle retourne la liste des todos
@@ -17,7 +41,7 @@ export class TodoService {
    * @returns Todo[]
    */
   getTodos(): Todo[] {
-    return this.todos;
+    return this.todos();
   }
 
   /**
@@ -27,7 +51,10 @@ export class TodoService {
    *
    */
   addTodo(todo: Todo): void {
-    this.todos.push(todo);
+    this.todos.update((todos)=>{
+      todos.push(todo)
+      return [...todos]
+    })
   }
 
   /**
@@ -37,9 +64,13 @@ export class TodoService {
    * @returns boolean
    */
   deleteTodo(todo: Todo): boolean {
-    const index = this.todos.indexOf(todo);
+    const index = this.todos().indexOf(todo);
     if (index > -1) {
-      this.todos.splice(index, 1);
+      this.todos.update((todos)=>{
+        todos.splice(index, 1);
+        return [...todos]
+      })
+      
       return true;
     }
     return false;
@@ -51,4 +82,13 @@ export class TodoService {
   logTodos() {
     this.loggerService.logger(this.todos);
   }
+
+  update(todo: Todo,status: TodoStatus) {
+    const index = this.todos().indexOf(todo)
+    this.todos.update((todos)=>{
+      todos[index].status=status;
+      return [...todos]
+    })
+  }
+
 }

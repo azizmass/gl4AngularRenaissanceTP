@@ -1,18 +1,29 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Todo } from '../model/todo';
 import { TodoService } from '../service/todo.service';
 
+import { FormsModule } from '@angular/forms';
+
+
+
 @Component({
-  selector: 'app-todo',
-  templateUrl: './todo.component.html',
-  styleUrls: ['./todo.component.css'],
-  providers: [TodoService],
+    selector: 'app-todo',
+    templateUrl: './todo.component.html',
+    styleUrls: ['./todo.component.css'],
+    providers: [TodoService],
+    standalone: true,
+    imports: [FormsModule],
 })
 export class TodoComponent {
-  todos: Todo[] = [];
+  private todoService = inject(TodoService);
+
+  public todos:Todo[]=[]
+
+  display = this.todoService.display
+
   todo = new Todo();
-  constructor(private todoService: TodoService) {
-    this.todos = this.todoService.getTodos();
+  constructor() {
+    this.todos = this.todoService.getTodos()
   }
   addTodo() {
     this.todoService.addTodo(this.todo);
@@ -21,5 +32,17 @@ export class TodoComponent {
 
   deleteTodo(todo: Todo) {
     this.todoService.deleteTodo(todo);
+
   }
+
+  updateInProgress(todo: Todo) {
+    this.todoService.update(todo,'in progress')
+  }
+  updateDone(todo: Todo) {
+    this.todoService.update(todo,'done')
+  }
+  updateWaiting(todo: Todo) {
+    this.todoService.update(todo,'waiting')
+  }
+
 }

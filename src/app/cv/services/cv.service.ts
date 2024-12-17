@@ -1,6 +1,5 @@
-import { Injectable } from "@angular/core";
+import { Injectable, inject, signal } from "@angular/core";
 import { Cv } from "../model/cv";
-import { Observable, Subject } from "rxjs";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { API } from "../../../config/api.config";
 
@@ -8,21 +7,25 @@ import { API } from "../../../config/api.config";
   providedIn: "root",
 })
 export class CvService {
+  private http = inject(HttpClient);
+
   private cvs: Cv[] = [];
   /**
-   * Le subject permettant de créer le flux des cvs sélectionnés
+   * Le signal permettant de créer le flux des cvs sélectionnés
    */
-  #selectCvSuject$ = new Subject<Cv>();
+  #selectCv = signal<Cv | null>(null);
+  selectedCv = this.#selectCv.asReadonly();
   /**
    * Le flux des cvs sélectionnés
    */
-  selectCv$ = this.#selectCvSuject$.asObservable();
-  constructor(private http: HttpClient) {
+
+  constructor() {
     this.cvs = [
       new Cv(1, "aymen", "sellaouti", "teacher", "as.jpg", "1234", 40),
       new Cv(2, "skander", "sellaouti", "enfant", "       ", "1234", 4),
     ];
   }
+
 
   /**
    *
@@ -42,7 +45,7 @@ export class CvService {
    * @returns CV[]
    *
    */
-  getCvs(): Observable<Cv[]> {
+  getCvs() {
     return this.http.get<Cv[]>(API.cv);
   }
 
@@ -54,11 +57,11 @@ export class CvService {
    * @returns CV[]
    *
    */
-  deleteCvById(id: number): Observable<any> {
+  deleteCvById(id: number) {
     return this.http.delete<any>(API.cv + id);
   }
 
-  addCv(cv: Cv): Observable<Cv> {
+  addCv(cv: Cv) {
     return this.http.post<any>(API.cv, cv);
   }
 
@@ -70,7 +73,7 @@ export class CvService {
    * @returns CV[]
    *
    */
-  getCvById(id: number): Observable<Cv> {
+  getCvById(id: number) {
     return this.http.get<Cv>(API.cv + id);
   }
 
@@ -129,6 +132,6 @@ export class CvService {
    * @param cv : Le cv à ajouter dans le flux des cvs sélectionnés
    */
   selectCv(cv: Cv) {
-    this.#selectCvSuject$.next(cv);
+    this.#selectCv.set(cv);
   }
 }
